@@ -56,30 +56,30 @@ InitBanner() {
     echo -e ""
 }
 
-# 函数：检查并启动 SSH
+# 函數：檢查並啟動 SSH
 enable_ssh() {
-    # 检查 openssh-server 是否安装
+    # 檢查 openssh-server 是否安裝
     if dpkg -l | grep -q openssh-server; then
-        echo "openssh-server 已安装。"
+        echo "openssh-server 已安裝。"
     else
-        echo "openssh-server 未安装，正在安装..."
+        echo "openssh-server 未安裝，正在安裝..."
         sudo apt-get update
         sudo apt-get install openssh-server -y
     fi
 
-    # 启动 SSH 服务
+    # 啟動 SSH 服務
     sudo systemctl start ssh
-    echo "SSH 服务已启动。"
+    echo "SSH 服務已啟動。"
 
-    # 设置 SSH 服务开机自启
+    # 設置 SSH 服務開機自啟
     sudo systemctl enable ssh
-    echo "SSH 服务已设置为开机自启。"
+    echo "SSH 服務已設置為開機自啟。"
 
-    # 显示 SSH 服务状态
+    # 顯示 SSH 服務狀態
     sudo systemctl status ssh
 }
 
-#安装常用办公必备软件(office、QQ、微信、远程桌面等)
+#安裝常用辦公必備軟件(office、QQ、微信、遠程桌面等)
 install_need_apps() {
     sudo apt-get upgrade -y
     sudo apt-get update
@@ -87,9 +87,9 @@ install_need_apps() {
     sudo apt-get install neofetch -y
 }
 
-# 下载虚拟机安装包run，并保存为virtualbox7.run
+# 下載虛擬機安裝包run，並保存為virtualbox7.run
 install_virtualbox() {
-    echo "安装虚拟机VirtualBox 7"
+    echo "安裝虛擬機VirtualBox 7"
     wget -O virtualbox7.run https://download.virtualbox.org/virtualbox/7.0.12/VirtualBox-7.0.12-159484-Linux_amd64.run
     sudo sh virtualbox7.run
 }
@@ -102,12 +102,12 @@ install_virtualbox_extpack() {
     sudo groupadd usbfs
     sudo adduser $USER vboxusers
     sudo adduser $USER usbfs
-    Show 0 "VM 扩展包安装完成,重启后才能生效。重启后USB才可以被虚拟机识别"
+    Show 0 "VM 擴展包安裝完成,重啟後才能生效。重啟後USB才可以被虛擬機識別"
 }
 
-# 格式转换
+# 格式轉換
 convert_vm_format() {
-    echo "虚拟机一键格式转换(img2vdi)"
+    echo "虛擬機一鍵格式轉換(img2vdi)"
     sudo apt-get update >/dev/null 2>&1
     if ! command -v pv &>/dev/null; then
         echo "pv is not installed. Installing pv..."
@@ -116,25 +116,25 @@ convert_vm_format() {
         echo -e
     fi
 
-    # 获取用户输入的文件路径
-    read -p "请将待转换的文件拖拽到此处(img|img.zip|img.gz): " file_path
+    # 獲取用戶輸入的文件路徑
+    read -p "請將待轉換的文件拖拽到此處(img|img.zip|img.gz): " file_path
 
-    # 去除路径两端的单引号（如果存在）
+    # 去除路徑兩端的單引號（如果存在）
     file_path=$(echo "$file_path" | sed "s/^'//; s/'$//")
 
-    # 验证文件是否存在
+    # 驗證文件是否存在
     if [ ! -f "$file_path" ]; then
-        Show 1 "文件不存在，请检查路径是否正确。"
+        Show 1 "文件不存在，請檢查路徑是否正確。"
         exit 1
     fi
 
-    # 定义目标文件路径
+    # 定義目標文件路徑
     target_path="${file_path%.*}.vdi"
 
-    # 检查文件类型并进行相应的处理
+    # 檢查文件類型並進行相應的處理
     if [[ "$file_path" == *.zip ]]; then
-        # 如果是 zip 文件，先解压
-        Show 0 "正在解压 zip 文件..."
+        # 如果是 zip 文件，先解壓
+        Show 0 "正在解壓 zip 文件..."
         unzip_dir=$(mktemp -d)
         unzip "$file_path" -d "$unzip_dir"
         img_file=$(find "$unzip_dir" -type f -name "*.img")
@@ -145,91 +145,91 @@ convert_vm_format() {
             exit 1
         fi
 
-        # 执行转换命令
-        Show 0 "正在转换 请稍后..."
+        # 執行轉換命令
+        Show 0 "正在轉換 請稍後..."
         VBoxManage convertfromraw "$img_file" "$target_path" --format VDI
 
-        # 清理临时目录
+        # 清理臨時目錄
         rm -rf "$unzip_dir"
     elif [[ "$file_path" == *.img.gz ]]; then
-        # 如果是 img.gz 文件，先解压
-        Show 0 "正在解压 img.gz 文件..."
+        # 如果是 img.gz 文件，先解壓
+        Show 0 "正在解壓 img.gz 文件..."
         pv "$file_path" | gunzip -c >"${file_path%.*}" || true
         img_file="${file_path%.*}"
 
-        # 执行转换命令
-        Show 0 "正在转换 请稍后..."
+        # 執行轉換命令
+        Show 0 "正在轉換 請稍後..."
         VBoxManage convertfromraw "$img_file" "$target_path" --format VDI
 
-        # 删除解压后的 img 文件
+        # 刪除解壓後的 img 文件
         rm -f "$img_file"
     elif [[ "$file_path" == *.img ]]; then
-        # 如果是 img 文件，直接执行转换
-        Show 0 "正在转换 请稍后..."
+        # 如果是 img 文件，直接執行轉換
+        Show 0 "正在轉換 請稍後..."
         VBoxManage convertfromraw "$file_path" "$target_path" --format VDI
     else
-        Show 1 "不支持的文件类型。"
+        Show 1 "不支持的文件類型。"
         exit 1
     fi
 
-    # 检查命令是否成功执行
+    # 檢查命令是否成功執行
     if [ $? -eq 0 ]; then
         sudo chmod 777 $target_path
-        Show 0 "转换成功。转换后的文件位于：$target_path"
+        Show 0 "轉換成功。轉換後的文件位於：$target_path"
     else
-        Show 1 "转换失败，请检查输入的路径和文件。"
+        Show 1 "轉換失敗，請檢查輸入的路徑和文件。"
     fi
 }
 
-# 卸载虚拟机
+# 卸載虛擬機
 uninstall_vm() {
-    echo "卸载虚拟机"
+    echo "卸載虛擬機"
     sudo sh /opt/VirtualBox/uninstall.sh
 }
 
-#  为了深度系统顺利安装CasaOS 打补丁和临时修改os-release
+#  為了深度系統順利安裝CasaOS 打補丁和臨時修改os-release
 patch_os_release() {
-    # 备份一下原始文件
+    # 備份一下原始文件
     sudo cp /etc/os-release /etc/os-release.backup
-    Show 0 "准备CasaOS的使用环境..."
-    Show 0 "打补丁和临时修改os-release"
-    # 打补丁
-    # 安装深度deepin缺少的依赖包udevil
+    Show 0 "準備CasaOS的使用環境..."
+    Show 0 "打補丁和臨時修改os-release"
+    # 打補丁
+    # 安裝深度deepin缺少的依賴包udevil
     wget -O /tmp/udevil.deb https://cdn.jsdelivr.net/gh/wukongdaily/diy-nas-onescript@master/res/udevil.deb
     sudo dpkg -i /tmp/udevil.deb
-    # 安装深度deepin缺少的依赖包mergerfs
+    # 安裝深度deepin缺少的依賴包mergerfs
     wget -O /tmp/mergerfs.deb https://cdn.jsdelivr.net/gh/wukongdaily/diy-nas-onescript@master/res/mergerfs.deb
     sudo dpkg -i /tmp/mergerfs.deb
 
-    #伪装debian 12 修改系统名称和代号，待CasaOS安装成功后，还原回来
+    #偽裝debian 12 修改系統名稱和代號，待CasaOS安裝成功後，還原回來
     sudo sed -i -e 's/^ID=.*$/ID=debian/' -e 's/^VERSION_CODENAME=.*$/VERSION_CODENAME=bookworm/' /etc/os-release
-    Show 0 "妥啦! 深度Deepin系统下安装CasaOS的环境已经准备好 你可以安装CasaOS了."
+    Show 0 "妥啦! 深度Deepin系統下安裝CasaOS的環境已經準備好 你可以安裝CasaOS了."
 }
 
-# 安装CasaOS—Docker
+# 安裝CasaOS—Docker
 install_casaos() {
     patch_os_release
-    echo "安装CasaOS"
+    echo "安裝CasaOS"
     curl -fsSL https://get.casaos.io | sudo bash
-    Show 0 "CasaOS 已安装,正在还原配置文件"
+    Show 0 "CasaOS 已安裝,正在還原配置文件"
     restore_os_release
 }
 
-# CasaOS安装成功之后,要记得还原配置文件
+# CasaOS安裝成功之後,要記得還原配置文件
 restore_os_release() {
     sudo cp /etc/os-release.backup /etc/os-release
-    Show 0 "配置文件已还原"
+    Show 0 "配置文件已還原"
 }
 
-#卸载CasaOS
+#卸載CasaOS
 uninstall_casaos() {
-    Show 2 "卸载 CasaOS"
+    Show 2 "卸載 CasaOS"
     sudo casaos-uninstall
 }
 
-#配置docker为国内镜像
+#配置docker為國內鏡像
 configure_docker_mirror() {
-    echo "配置docker为国内镜像"
+    echo "配置docker為國內鏡像"
     sudo mkdir -p /etc/docker
 
     sudo tee /etc/docker/daemon.json <<-'EOF'
@@ -246,32 +246,32 @@ EOF
 
     sudo systemctl daemon-reload
     sudo systemctl restart docker
-    Show 0 "docker 国内镜像地址配置完毕!"
+    Show 0 "docker 國內鏡像地址配置完畢!"
 }
 
 install_fcitx5_chewing() {
     sudo apt-get install fcitx5-chewing -y
     if [ $? -eq 0 ]; then
-        Show 0 "新酷音输入法(注音输入法) 安装成功"
-        Show 0 "请您在全部应用里找到Fxitx5配置,添加新酷音"
+        Show 0 "新酷音輸入法(注音輸入法) 安裝成功"
+        Show 0 "請您在全部應用里找到Fxitx5配置,添加新酷音"
     else
-        Show 1 "安装失败，请检查错误信息"
+        Show 1 "安裝失敗，請檢查錯誤信息"
     fi
 }
 
-# 设置开机自启动虚拟机virtualbox
+# 設置開機自啟動虛擬機virtualbox
 set_vm_autostart() {
-    # 定义红色文本
+    # 定義紅色文本
     RED='\033[0;31m'
-    # 无颜色
+    # 無顏色
     NC='\033[0m'
     GREEN='\033[0;32m'
 
-    # 显示带有红色文本的提示信息
+    # 顯示帶有紅色文本的提示信息
     echo -e
-    echo -e "设置虚拟机开机自启动,需要${GREEN}设置系统自动登录。${NC}\n${RED}这可能会带来安全风险。当然如果你后悔了,也可以在系统设置里取消自动登录。是否继续？${NC} [Y/n] "
+    echo -e "設置虛擬機開機自啟動,需要${GREEN}設置系統自動登錄。${NC}\n${RED}這可能會帶來安全風險。當然如果你後悔了,也可以在系統設置里取消自動登錄。是否繼續？${NC} [Y/n] "
 
-    # 读取用户的响应
+    # 讀取用戶的響應
     read -r -n 1 response
     echo # 新行
 
@@ -287,103 +287,103 @@ set_vm_autostart() {
 
 }
 
-#设置自动登录
+#設置自動登錄
 setautologin() {
-    # 使用whoami命令获取当前有效的用户名
+    # 使用whoami命令獲取當前有效的用戶名
     USERNAME=$(whoami)
 
-    # 设置LightDM配置以启用自动登录
+    # 設置LightDM配置以啟用自動登錄
     sudo sed -i '/^#autologin-user=/s/^#//' /etc/lightdm/lightdm.conf
     sudo sed -i "s/^autologin-user=.*/autologin-user=$USERNAME/" /etc/lightdm/lightdm.conf
     sudo sed -i "s/^#autologin-user-timeout=.*/autologin-user-timeout=0/" /etc/lightdm/lightdm.conf
-    # 去掉开机提示:解锁您的开机密钥环
+    # 去掉開機提示:解鎖您的開機密鑰環
     sudo rm -rf ~/.local/share/keyrings/*
 }
 
-# 设置开机5秒后
-# 自动启动所有虚拟机(无头启动)
+# 設置開機5秒後
+# 自動啟動所有虛擬機(無頭啟動)
 do_autostart_vm() {
-    # 检查系统上是否安装了VirtualBox
+    # 檢查系統上是否安裝了VirtualBox
     if ! command -v VBoxManage >/dev/null; then
-        Show 1 "未检测到VirtualBox。请先安装VirtualBox。"
+        Show 1 "未檢測到VirtualBox。請先安裝VirtualBox。"
         return
     fi
 
-    # 确定/etc/rc.local文件是否存在，如果不存在，则创建它
+    # 確定/etc/rc.local文件是否存在，如果不存在，則創建它
     if [ ! -f /etc/rc.local ]; then
         echo "#!/bin/sh -e" | sudo tee /etc/rc.local >/dev/null
         sudo chmod +x /etc/rc.local
     fi
 
-    # 获取当前用户名
+    # 獲取當前用戶名
     USERNAME=$(whoami)
 
-    # 获取当前所有虚拟机的名称并转换为数组
+    # 獲取當前所有虛擬機的名稱並轉換為數組
     VMS=$(VBoxManage list vms | cut -d ' ' -f 1 | sed 's/"//g')
     VM_ARRAY=($VMS)
 
-    # 检查虚拟机数量
+    # 檢查虛擬機數量
     if [ ${#VM_ARRAY[@]} -eq 0 ]; then
-        Show 1 "没有检测到任何虚拟机,您应该先创建虚拟机"
+        Show 1 "沒有檢測到任何虛擬機,您應該先創建虛擬機"
         return
     fi
 
-    # 设置自动登录 免GUI桌面登录
+    # 設置自動登錄 免GUI桌面登錄
     setautologin
 
-    # 创建一个临时文件用于存储新的rc.local内容
+    # 創建一個臨時文件用於存儲新的rc.local內容
     TMP_RC_LOCAL=$(mktemp)
 
-    # 向临时文件添加初始行
+    # 向臨時文件添加初始行
     echo "#!/bin/sh -e" >$TMP_RC_LOCAL
     echo "sleep 5" >>$TMP_RC_LOCAL
 
-    # 为每个现存的虚拟机添加启动命令
+    # 為每個現存的虛擬機添加啟動命令
     for VMNAME in "${VM_ARRAY[@]}"; do
         echo "su - $USERNAME -c \"VBoxHeadless -s $VMNAME &\"" >>$TMP_RC_LOCAL
     done
 
-    # 添加exit 0到临时文件的末尾
+    # 添加exit 0到臨時文件的末尾
     echo "exit 0" >>$TMP_RC_LOCAL
 
-    # 用新的rc.local内容替换旧的rc.local文件
+    # 用新的rc.local內容替換舊的rc.local文件
     cat $TMP_RC_LOCAL | sudo tee /etc/rc.local >/dev/null
 
-    # 删除临时文件
+    # 刪除臨時文件
     rm $TMP_RC_LOCAL
 
-    # 创建一个临时文件用于存储虚拟机列表
+    # 創建一個臨時文件用於存儲虛擬機列表
     TMP_VM_LIST=$(mktemp)
 
-    # 将虚拟机名称写入临时文件
+    # 將虛擬機名稱寫入臨時文件
     for VMNAME in "${VM_ARRAY[@]}"; do
         echo "$VMNAME" >>"$TMP_VM_LIST"
     done
 
-    # 使用 dialog 显示虚拟机列表，并将按钮标记为“确定”
-    dialog --title "下列虚拟机均已设置为开机自启动" --ok-label "确定" --textbox "$TMP_VM_LIST" 10 50
+    # 使用 dialog 顯示虛擬機列表，並將按鈕標記為“確定”
+    dialog --title "下列虛擬機均已設置為開機自啟動" --ok-label "確定" --textbox "$TMP_VM_LIST" 10 50
 
-    # 清除对话框
+    # 清除對話框
     clear
 
-    # 删除临时文件
+    # 刪除臨時文件
     rm "$TMP_VM_LIST"
 
-    # 显示/etc/rc.local的内容
-    Show 0 "已将所有虚拟机设置为开机无头自启动。查看配置 /etc/rc.local,如下"
+    # 顯示/etc/rc.local的內容
+    Show 0 "已將所有虛擬機設置為開機無頭自啟動。查看配置 /etc/rc.local,如下"
     cat /etc/rc.local
 }
 
-# 安装btop
+# 安裝btop
 enable_btop() {
-    # 尝试使用 apt 安装 btop
+    # 嘗試使用 apt 安裝 btop
     if sudo apt-get update >/dev/null 2>&1 && sudo apt-get install -y btop 2>/dev/null; then
         echo "btop successfully installed using apt."
         return 0
     else
         echo "Failed to install btop using apt, trying snap..."
 
-        # 检查 snap 是否已安装
+        # 檢查 snap 是否已安裝
         if ! command -v snap >/dev/null; then
             echo "Snap is not installed. Installing snapd..."
             if ! sudo apt-get install -y snapd; then
@@ -395,22 +395,22 @@ enable_btop() {
             echo "Snap is already installed."
         fi
 
-        # 使用 snap 安装 btop
+        # 使用 snap 安裝 btop
         if sudo snap install btop; then
             echo "btop successfully installed using snap."
-            # 定义要添加的路径
+            # 定義要添加的路徑
             path_to_add="/snap/bin"
-            # 检查 ~/.bashrc 中是否已存在该路径
+            # 檢查 ~/.bashrc 中是否已存在該路徑
             if ! grep -q "export PATH=\$PATH:$path_to_add" ~/.bashrc; then
-                # 如果不存在，将其添加到 ~/.bashrc 文件的末尾
+                # 如果不存在，將其添加到 ~/.bashrc 文件的末尾
                 echo "export PATH=\$PATH:$path_to_add" >>~/.bashrc
                 echo "Path $path_to_add added to ~/.bashrc"
             else
                 echo "Path $path_to_add already in ~/.bashrc"
             fi
-            # 重新加载 ~/.bashrc
+            # 重新加載 ~/.bashrc
             source ~/.bashrc
-            Show 0 "btop已经安装,你可以使用btop命令了"
+            Show 0 "btop已經安裝,你可以使用btop命令了"
             return 0
         else
             echo "Failed to install btop using snap."
@@ -422,37 +422,37 @@ enable_btop() {
 declare -a menu_options
 declare -A commands
 menu_options=(
-    "启用SSH服务"
-    "安装注音输入法(新酷音输入法)"
-    "安装常用办公必备软件(office、QQ、微信、远程桌面等)"
-    "安装虚拟机VirtualBox 7"
-    "安装虚拟机VirtualBox 7扩展包"
-    "设置虚拟机开机无头自启动"
-    "卸载虚拟机"
-    "虚拟机一键格式转换(img2vdi)"
-    "准备CasaOS的使用环境"
-    "安装CasaOS(包含Docker)"
-    "还原配置文件os-release"
-    "卸载 CasaOS"
-    "配置docker为国内镜像"
-    "安装btop资源监控工具"
+    "啟用SSH服務"
+    "安裝注音輸入法(新酷音輸入法)"
+    "安裝常用辦公必備軟件(office、QQ、微信、遠程桌面等)"
+    "安裝虛擬機VirtualBox 7"
+    "安裝虛擬機VirtualBox 7擴展包"
+    "設置虛擬機開機無頭自啟動"
+    "卸載虛擬機"
+    "虛擬機一鍵格式轉換(img2vdi)"
+    "準備CasaOS的使用環境"
+    "安裝CasaOS(包含Docker)"
+    "還原配置文件os-release"
+    "卸載 CasaOS"
+    "配置docker為國內鏡像"
+    "安裝btop資源監控工具"
 )
 
 commands=(
-    ["启用SSH服务"]="enable_ssh"
-    ["安装虚拟机VirtualBox 7"]="install_virtualbox"
-    ["安装虚拟机VirtualBox 7扩展包"]="install_virtualbox_extpack"
-    ["虚拟机一键格式转换(img2vdi)"]="convert_vm_format"
-    ["设置虚拟机开机无头自启动"]="set_vm_autostart"
-    ["卸载虚拟机"]="uninstall_vm"
-    ["准备CasaOS的使用环境"]="patch_os_release"
-    ["安装CasaOS(包含Docker)"]="install_casaos"
-    ["还原配置文件os-release"]="restore_os_release"
-    ["卸载 CasaOS"]="uninstall_casaos"
-    ["配置docker为国内镜像"]="configure_docker_mirror"
-    ["安装常用办公必备软件(office、QQ、微信、远程桌面等)"]="install_need_apps"
-    ["安装注音输入法(新酷音输入法)"]="install_fcitx5_chewing"
-    ["安装btop资源监控工具"]="enable_btop"
+    ["啟用SSH服務"]="enable_ssh"
+    ["安裝虛擬機VirtualBox 7"]="install_virtualbox"
+    ["安裝虛擬機VirtualBox 7擴展包"]="install_virtualbox_extpack"
+    ["虛擬機一鍵格式轉換(img2vdi)"]="convert_vm_format"
+    ["設置虛擬機開機無頭自啟動"]="set_vm_autostart"
+    ["卸載虛擬機"]="uninstall_vm"
+    ["準備CasaOS的使用環境"]="patch_os_release"
+    ["安裝CasaOS(包含Docker)"]="install_casaos"
+    ["還原配置文件os-release"]="restore_os_release"
+    ["卸載 CasaOS"]="uninstall_casaos"
+    ["配置docker為國內鏡像"]="configure_docker_mirror"
+    ["安裝常用辦公必備軟件(office、QQ、微信、遠程桌面等)"]="install_need_apps"
+    ["安裝注音輸入法(新酷音輸入法)"]="install_fcitx5_chewing"
+    ["安裝btop資源監控工具"]="enable_btop"
 
 )
 
@@ -463,16 +463,16 @@ show_menu() {
     echo -e "${GREEN_LINE}"
     echo '
     ***********  DIY NAS 工具箱v1.1  ***************
-    适配系统:deepin 20.9/v23 beta2(基于debian)
-    脚本作用:快速部署一个办公场景下的Diy NAS
+    適配系統:deepin 20.9/v23 beta2(基於debian)
+    腳本作用:快速部署一個辦公場景下的Diy NAS
     
             --- Made by wukong with YOU ---
     '
     echo -e "${GREEN_LINE}"
-    echo "请选择操作："
+    echo "請選擇操作："
 
     for i in "${!menu_options[@]}"; do
-        if [[ "${menu_options[i]}" == "设置虚拟机开机无头自启动" ]]; then
+        if [[ "${menu_options[i]}" == "設置虛擬機開機無頭自啟動" ]]; then
             echo -e "$((i + 1)). ${YELLOW}${menu_options[i]}${NO_COLOR}"
         else
             echo "$((i + 1)). ${menu_options[i]}"
@@ -484,17 +484,17 @@ handle_choice() {
     local choice=$1
 
     if [ -z "${menu_options[$choice - 1]}" ] || [ -z "${commands[${menu_options[$choice - 1]}]}" ]; then
-        echo "无效选项，请重新选择。"
+        echo "無效選項，請重新選擇。"
         return
     fi
 
     "${commands[${menu_options[$choice - 1]}]}"
 }
 
-# 主逻辑
+# 主邏輯
 while true; do
     show_menu
-    read -p "请输入选项的序号(输入q退出): " choice
+    read -p "請輸入選項的序號(輸入q退出): " choice
     if [[ $choice == 'q' ]]; then
         break
     fi
